@@ -1,6 +1,6 @@
 local types = require("../types")
 
-local function run_unit(units: { () -> types.UnitRunResult }): types.UnitsRunResult
+local function run_units(units: { () -> types.UnitRunResult }): types.UnitsRunResult
 	local total_duration = 0
 	local total_tally = {
 		fail = 0,
@@ -25,4 +25,4 @@ local function run_unit(units: { () -> types.UnitRunResult }): types.UnitsRunRes
 	}
 end
 
-return run_unit
+return run_units
