@@ -1,6 +1,7 @@
 local repr = require("../fmt/repr")
 
 type Indexable = { [any]: any }
+type Callable<A... = ...any, R... = ...any> = (A...) -> R...
 
 export type ExpectTests = {
 	to_exist: (ExpectTests) -> ExpectTests,
@@ -21,11 +22,11 @@ export type ExpectTests = {
 	to_have_value: (ExpectTests, value: any) -> ExpectTests,
 	to_never_have_value: (ExpectTests, value: any) -> ExpectTests,
 
-	to_fail: (ExpectTests, ...unknown) -> ExpectTests,
-	to_never_fail: (ExpectTests, ...unknown) -> ExpectTests,
+	to_throw: (ExpectTests, ...unknown) -> ExpectTests,
+	to_never_throw: (ExpectTests, ...unknown) -> ExpectTests,
 
-	to_fail_with: (ExpectTests, message: string, ...unknown) -> ExpectTests,
-	to_never_fail_with: (ExpectTests, message: string, ...unknown) -> ExpectTests,
+	to_throw_with: (ExpectTests, message: string, ...unknown) -> ExpectTests,
+	to_never_throw_with: (ExpectTests, message: string, ...unknown) -> ExpectTests,
 }
 type Self<T = unknown> = {
 	val: T,
@@ -178,7 +179,7 @@ local CLASS = table.freeze({
 		return self
 	end,
 
-	to_fail = function<A...>(self: Self<(A...) -> ...any>, ...: A...): Self<(A...) -> ...any>
+	to_fail = function<A...>(self: Self<Callable<A...>>, ...: A...): Self<Callable<A...>>
 		local a = self.val
 
 		check(type(a) == "function", "expect() value must be a function")
@@ -191,7 +192,7 @@ local CLASS = table.freeze({
 
 		return self
 	end,
-	to_never_fail = function<A...>(self: Self<(A...) -> ...any>, ...: A...): Self<(A...) -> ...any>
+	to_never_fail = function<A...>(self: Self<Callable<A...>>, ...: A...): Self<Callable<A...>>
 		local f = self.val
 
 		check(type(f) == "function", "expect() value must be a function")
@@ -205,11 +206,7 @@ local CLASS = table.freeze({
 		return self
 	end,
 
-	to_fail_with = function<A...>(
-		self: Self<(A...) -> ...any>,
-		message: string,
-		...: A...
-	): Self<(A...) -> ...any>
+	to_fail_with = function<A...>(self: Self<Callable<A...>>, message: string, ...: A...): Self<Callable<A...>>
 		local f = self.val
 		local ok, err: string = pcall(f, ...)
 
@@ -223,11 +220,7 @@ local CLASS = table.freeze({
 
 		return self
 	end,
-	to_never_fail_with = function<A...>(
-		self: Self<(A...) -> ...any>,
-		message: string,
-		...: A...
-	): Self<(A...) -> ...any>
+	to_never_fail_with = function<A...>(self: Self<Callable<A...>>, message: string, ...: A...): Self<Callable<A...>>
 		local f = self.val
 		local ok, err: string = pcall(f, ...)
 
