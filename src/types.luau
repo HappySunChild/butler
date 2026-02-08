@@ -1,57 +1,36 @@
---!strict
-
-export type Test = {
-	labels: { string },
-	callback: (RunContext) -> (),
-}
-
 export type Error = {
-	type: 'errorReport',
+	type: string,
 	message: string,
-	trace: string,
+
+	trace: string?,
+	line: number?,
+	code: string?,
 }
 
-export type TestResults = {
-	status: 'pass' | 'fail',
+export type UnitRunResult = {
+	duration: number,
+
+	label: string,
+	individual: { [Test]: TestRunResult },
+	tally: { pass: number, fail: number },
+}
+export type UnitsRunResult = {
+	total_duration: number,
+	total_tally: { pass: number, fail: number },
+	-- total_individual_tests: { [Test]: TestRunResult },
+
+	individual_units: { UnitRunResult },
+}
+export type TestRunResult = {
+	duration: number,
+
+	status: "pass" | "fail",
 	error: Error?,
 }
 
-export type RunResults = {
-	tests: { Test },
-	tally: { pass: number, fail: number, [string]: number },
-	individual: { [Test]: TestResults },
-}
-
-export type DescribeContext = {
-	labels: { string },
-	tests: { Test },
-}
-export type RunContext = {}
-export type Context = DescribeContext | RunContext
-
-export type Expectation<V> = {
-	_value: V,
-	_condition: boolean,
-
-	also: Expectation<V>,
-	please: Expectation<V>,
-	have: Expectation<V>,
-	to: Expectation<V>,
-	be: Expectation<V>,
-	ever: Expectation<V>,
-	never: Expectation<V>,
-
-	ok: () -> Expectation<V>,
-	work: () -> Expectation<V>,
-	a: (class: string) -> Expectation<V>,
-	an: (class: string) -> Expectation<V>,
-	equal: (other: any) -> Expectation<V>,
-	near: (other: number, epsilon: number?) -> Expectation<V>,
-	above: (other: number) -> Expectation<V>,
-	below: (other: number) -> Expectation<V>,
-	throw: (message: string?) -> Expectation<V>,
-	key: (key: any) -> Expectation<V>,
-	value: (value: any) -> Expectation<V>,
+export type Test = {
+	label: string,
+	body: (...any?) -> ...any?,
 }
 
 return nil
