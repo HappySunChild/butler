@@ -1,2 +1,2 @@
-# tinunit
- Basic unit testing module for Roblox Luau, based off of [TestEZ](https://github.com/roblox/testez) and [tiniest](https://github.com/dphfox/tiniest).
+# Basic Unit Testing Library (er)
+`butler` is a small collection of utility functions that make writing tests simple.
