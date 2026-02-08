@@ -4,7 +4,7 @@ local format_duration = require("./format_duration")
 
 type FormattedResult = {
 	test: types.Test,
-	result: types.TestRunResult,
+	test_results: types.TestRunResult,
 	icon: string,
 
 	full_label: string,
@@ -70,6 +70,7 @@ local function results_formatter(options: FmtOptions)
 	local DIVIDER = if DISABLE_UNICODE then "=" else "═"
 	local MARGIN_LINE = if DISABLE_UNICODE then "|" else "│"
 	local ARROW = if DISABLE_UNICODE then ">" else "▸"
+	local BULLET = if DISABLE_UNICODE then "-" else "•"
 
 	local PASS_ICON = if DISABLE_EMOJI
 		then pass_bright(if DISABLE_UNICODE then "[PASS]" else "✔")
@@ -89,41 +90,62 @@ local function results_formatter(options: FmtOptions)
 
 	local FULL_DIVIDER = dim(string.rep(DIVIDER, LINE_WIDTH))
 
-	local function fmt(units_results: types.UnitsRunResult): string
+	local function run_fmt(units_results: types.UnitsRunResult): string
 		local lines = {}
 
 		local pretty_results: { FormattedResult } = {}
+		local remarkable_pretty_results: { FormattedResult } = {}
 
-		for _, unit_result in units_results.individual_units do
-			local individual = unit_result.individual
+		for _, unit_results in units_results.individual_units do
+			local individual = unit_results.individual
 
-			for _, test in unit_result.ordered_tests do
+			for _, test in unit_results.ordered_tests do
 				local test_result = individual[test]
-				local status_emoji = if test_result.status == "pass" then PASS_ICON else FAIL_ICON
+				local status_emojis = if test_result.status == "pass" then PASS_ICON else FAIL_ICON
 				local annotations = {
 					"",
 					format_duration(test_result.duration),
 				}
 
-				table.insert(pretty_results, {
+				local pretty = {
 					test = test,
-					result = test_result,
-					icon = status_emoji,
+					test_results = test_result,
+					icon = status_emojis,
 
-					full_label = `{unit_result.label} {ARROW} {test.label}`,
+					full_label = `{unit_results.label} {ARROW} {test.label}`,
 					annotations = dim(table.concat(annotations, " - ")),
-				})
+				}
+
+				if #test_result.remarks > 0 then
+					table.insert(remarkable_pretty_results, pretty)
+				end
+
+				table.insert(pretty_results, pretty)
 			end
 		end
 
-		-- ERRORS
+		-- REMARKS SECTION
+		if #remarkable_pretty_results > 0 then
+			table.insert(lines, title(`Remarks from {#remarkable_pretty_results} test(s)`) .. "\n")
 
+			for _, pretty in remarkable_pretty_results do
+				local results = pretty.test_results
+
+				table.insert(lines, `{pretty.icon} {pretty.full_label}`)
+				for _, remark in results.remarks do
+					table.insert(lines, `    {BULLET} {remark}`)
+				end
+				table.insert(lines, "")
+			end
+		end
+
+		-- ERRORS SECTION
 		if units_results.total_tally.fail > 0 then
 			table.insert(lines, title(`Errors from {units_results.total_tally.fail} test(s)`))
 			table.insert(lines, "")
 
 			for _, pretty in pretty_results do
-				local err = pretty.result.error
+				local err = pretty.test_results.error
 
 				if err == nil then
 					continue
@@ -155,26 +177,14 @@ local function results_formatter(options: FmtOptions)
 			end
 		end
 
-		-- STATUS
-
-		table.insert(lines, title(`Status of {#pretty_results} test(s)`))
-		table.insert(lines, "")
-
+		-- STATUS SECTION
+		table.insert(lines, title(`Status of {#pretty_results} test(s)`) .. "\n")
 		for _, pretty in pretty_results do
 			table.insert(lines, `{pretty.icon} {pretty.full_label}{pretty.annotations}`)
 		end
-
 		table.insert(lines, "")
 
-		-- CONCLUSION
-
-		local total_tally = units_results.total_tally
-
-		table.insert(
-			lines,
-			title(`{pass(total_tally.pass)} passed, {fail(total_tally.fail)} failed`)
-		)
-
+		-- CONCLUSION SECTION
 		local line_items = {}
 
 		local function add_line_item(key: string, value: string)
@@ -183,19 +193,23 @@ local function results_formatter(options: FmtOptions)
 
 		add_line_item("Total Duration", tint_string(format_duration(units_results.total_duration)))
 
-		table.insert(lines, "")
+		local total_tally = units_results.total_tally
 
+		table.insert(
+			lines,
+			title(`{pass(total_tally.pass)} passed, {fail(total_tally.fail)} failed`)
+		)
+		table.insert(lines, "")
 		for _, item in line_items do
 			table.insert(lines, item)
 		end
-
 		table.insert(lines, "")
 		table.insert(lines, FULL_DIVIDER)
 
 		return table.concat(lines, "\n")
 	end
 
-	return fmt
+	return run_fmt
 end
 
 return results_formatter

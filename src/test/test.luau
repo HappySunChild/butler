@@ -1,6 +1,6 @@
 local types = require("../types")
 
-local function test(label: string, body: (...any?) -> ...any?): types.Test
+local function test(label: string, body: types.TestBody): types.Test
 	return {
 		label = label,
 		body = body,

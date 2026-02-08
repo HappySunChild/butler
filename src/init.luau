@@ -1,5 +1,3 @@
-local results_formatter = require("@self/fmt/results_formatter")
-
 local butler = table.freeze({
 	-- UNIT HANDLING
 	unit = require("@self/unit/unit"),
@@ -10,8 +8,9 @@ local butler = table.freeze({
 	expect = require("@self/test/expect"),
 
 	-- FORMATTING
-	results_formatter = results_formatter,
-	default_fmt = results_formatter({}),
+	results_formatter = require("@self/fmt/results_formatter"),
+	fmt_duration = require("@self/fmt/format_duration"),
+	fmt_repr = require("@self/fmt/repr"),
 })
 
 return butler

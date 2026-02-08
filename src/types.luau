@@ -21,16 +21,18 @@ export type UnitsRunResult = {
 
 	individual_units: { UnitRunResult },
 }
-export type TestRunResult = {
-	duration: number,
 
-	status: "pass" | "fail",
-	error: Error?,
-}
-
+export type TestBody = (remark: (string) -> ()) -> ()
 export type Test = {
 	label: string,
-	body: (...any?) -> ...any?,
+	body: TestBody,
+}
+export type TestRunResult = {
+	duration: number,
+	status: "pass" | "fail",
+	remarks: { string },
+
+	error: Error?,
 }
 
 return nil

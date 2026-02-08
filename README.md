@@ -72,6 +72,28 @@ does not equal 0
 ══════════════════════════════ 3 passed, 1 failed ══════════════════════════════
 ```
 
+*Example remark output:*
+```
+════════════════════════════ Remarks from 1 test(s) ════════════════════════════
+
+✅ maths ▸ bench addition
+    • total trials: 1000000
+    • avg time per operation: 0.01µs
+
+═════════════════════════════ Status of 5 test(s) ══════════════════════════════
+
+✅ maths ▸ addition - 11.91µs
+✅ maths ▸ subtraction - 1.01µs
+✅ maths ▸ multiplication - 1.01µs
+✅ maths ▸ division - 20.51µs
+✅ maths ▸ bench addition - 3.48ms
+
+══════════════════════════════ 5 passed, 0 failed ══════════════════════════════
+
+Total Duration: 3.52ms
+
+════════════════════════════════════════════════════════════════════════════════
+```
 ---
 
 `butler` is based off of dphfox's [tiniest](https://github.com/dphfox/tiniest).
