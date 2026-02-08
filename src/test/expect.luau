@@ -41,7 +41,7 @@ local function fail(value: any, reason: string, ...: any)
 	error({
 		type = "failed_expectation",
 		message = `Expectation not met, because:\n{reason}`,
-		trace = debug.traceback(nil, 4),
+		trace = debug.traceback(nil, 3),
 		line = debug.info(3, "l"),
 		code = `expect({repr(value)}):{label}({table.concat({ ... }, ", ")})`,
 	}, 0)
@@ -228,7 +228,7 @@ local CLASS = table.freeze({
 		message: string,
 		...: A...
 	): Self<(A...) -> ...any>
-	local f = self.val
+		local f = self.val
 		local ok, err: string = pcall(f, ...)
 
 		if not ok and err:lower():match(message:lower()) then

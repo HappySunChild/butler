@@ -2,7 +2,7 @@ export type Error = {
 	type: string,
 	message: string,
 
-	trace: string?,
+	trace: string,
 	line: number?,
 	code: string?,
 }

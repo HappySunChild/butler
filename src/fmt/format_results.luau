@@ -1,6 +1,7 @@
 local types = require("../types")
 
 local format_duration = require("./format_duration")
+local paint = require("./paint")
 
 type FormattedResult = {
 	test: types.Test,
@@ -11,16 +12,29 @@ type FormattedResult = {
 	annotations: string,
 }
 
-local LINE_LENGTH = 80
-local DIVIDER = "═"
-local MARGIN_LINE = "│"
-local ARROW = "▸"
+local DISABLE_UNICODE = false
+local DISABLE_EMOJI = true
 
-local PASS_EMOJI = "✅"
-local FAIL_EMOJI = "❌"
+-- COLORS
+local dim = paint.bind("2", "90")
+local pass_bright = paint.bind("92")
+local pass = paint.bind("32")
+local fail_bright = paint.bind("91")
+local fail = paint.bind("31")
+local trace = paint.bind("95")
+local trace_dim = paint.bind("2", "35")
+
+local LINE_WIDTH = 80
+
+local DIVIDER = if DISABLE_UNICODE then "=" else "═"
+local MARGIN_LINE = if DISABLE_UNICODE then "|" else "│"
+local ARROW = if DISABLE_UNICODE then ">" else "▸"
+
+local PASS_ICON = if DISABLE_EMOJI then pass_bright("[PASS]") else "✅ "
+local FAIL_ICON = if DISABLE_EMOJI then fail_bright("[FAIL]") else "❌ "
 
 local function title(text: string)
-	local divider_count = (LINE_LENGTH - string.len(text) - 2) / 2
+	local divider_count = (LINE_WIDTH - string.len(text) - 2) / 2
 	local divider_lhs = string.rep(DIVIDER, math.floor(divider_count))
 	local divider_rhs = string.rep(DIVIDER, math.ceil(divider_count))
 
@@ -34,7 +48,7 @@ local function format_results(units_results: types.UnitsRunResult): string
 
 	for _, unit_result in units_results.individual_units do
 		for test, test_result in unit_result.individual do
-			local status_emoji = if test_result.status == "pass" then PASS_EMOJI else FAIL_EMOJI
+			local status_emoji = if test_result.status == "pass" then PASS_ICON else FAIL_ICON
 			local annotations = {
 				"",
 				format_duration(test_result.duration),
@@ -46,7 +60,7 @@ local function format_results(units_results: types.UnitsRunResult): string
 				icon = status_emoji,
 
 				full_label = `{unit_result.label} {ARROW} {test.label}`,
-				annotations = table.concat(annotations, " - "),
+				annotations = dim(table.concat(annotations, " - ")),
 			})
 		end
 	end
@@ -64,26 +78,29 @@ local function format_results(units_results: types.UnitsRunResult): string
 				continue
 			end
 
-			table.insert(lines, `{pretty.icon}  {pretty.full_label}`)
-			table.insert(lines, err.message)
+			table.insert(lines, `{pretty.icon} {pretty.full_label}`)
+			table.insert(lines, trace(err.message))
 
 			local snippet = err.code
 
 			if snippet ~= nil then
 				local line = tostring(err.line or "??")
-				local empty_margin = string.rep(" ", #line + 1) .. MARGIN_LINE
+				local empty_margin = string.rep(" ", #line + 1) .. dim(MARGIN_LINE)
 
-				local formatted_snippet = snippet:gsub("[^\n\r]+[\n\r]", function(line: string)
-					return `{line}{empty_margin} `
-				end)
+				local formatted_snippet = paint
+					.syntax(snippet)
+					:gsub("[^\n\r]+[\n\r]", function(line: string)
+						return `{line}{empty_margin} `
+					end)
 
 				table.insert(lines, empty_margin)
-				table.insert(lines, `{line} {MARGIN_LINE} {formatted_snippet}`)
+				table.insert(lines, `{trace(line)} {dim(MARGIN_LINE)} {formatted_snippet}`)
 				table.insert(lines, empty_margin)
 			end
-		end
 
-		table.insert(lines, "")
+			table.insert(lines, trace_dim(err.trace))
+			table.insert(lines, "")
+		end
 	end
 
 	-- STATUS
@@ -92,7 +109,7 @@ local function format_results(units_results: types.UnitsRunResult): string
 	table.insert(lines, "")
 
 	for _, pretty in pretty_results do
-		table.insert(lines, `{pretty.icon}  {pretty.full_label}{pretty.annotations}`)
+		table.insert(lines, `{pretty.icon} {pretty.full_label}{pretty.annotations}`)
 	end
 
 	table.insert(lines, "")
@@ -101,7 +118,7 @@ local function format_results(units_results: types.UnitsRunResult): string
 
 	local total_tally = units_results.total_tally
 
-	table.insert(lines, title(`{total_tally.pass} passed, {total_tally.fail} failed`))
+	table.insert(lines, title(`{pass(total_tally.pass)} passed, {fail(total_tally.fail)} failed`))
 
 	return table.concat(lines, "\n")
 end
