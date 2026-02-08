@@ -30,19 +30,24 @@ local maths_unit = unit("maths", {
 })
 
 local results = butler.run_units({ maths_unit })
-local formatted = butler.format_results(results)
+local fmt = butler.results_formatter({
+	disable_color = false,
+	disable_unicode = false,
+	disable_emoji = false,
+})
 
-print(formatted)
+print(fmt(results))
+
 ```
 
 *Example output:*
 ```
 ═════════════════════════════ Status of 4 test(s) ══════════════════════════════
 
-✅  maths ▸ addition - 9.01µs
-✅  maths ▸ subtraction - 2.5µs
-✅  maths ▸ division - 6.71µs
-✅  maths ▸ multiplication - 1.51µs
+✅ maths ▸ addition - 9.01µs
+✅ maths ▸ subtraction - 2.5µs
+✅ maths ▸ division - 6.71µs
+✅ maths ▸ multiplication - 1.51µs
 
 ══════════════════════════════ 4 passed, 0 failed ══════════════════════════════
 ```
@@ -59,10 +64,10 @@ does not equal 0
 
 ═════════════════════════════ Status of 4 test(s) ══════════════════════════════
 
-✅  maths ▸ subtraction - 2.61µs
-✅  maths ▸ addition - 9.2µs
-❌  maths ▸ division - 0.14ms
-✅  maths ▸ multiplication - 1.31µs
+✅ maths ▸ subtraction - 2.61µs
+✅ maths ▸ addition - 9.2µs
+❌ maths ▸ division - 0.14ms
+✅ maths ▸ multiplication - 1.31µs
 
 ══════════════════════════════ 3 passed, 1 failed ══════════════════════════════
 ```
