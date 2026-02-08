@@ -8,16 +8,16 @@ export type Error = {
 }
 
 export type UnitRunResult = {
-	duration: number,
-
 	label: string,
+	duration: number,
+	ordered_tests: { Test },
+
 	individual: { [Test]: TestRunResult },
 	tally: { pass: number, fail: number },
 }
 export type UnitsRunResult = {
 	total_duration: number,
 	total_tally: { pass: number, fail: number },
-	-- total_individual_tests: { [Test]: TestRunResult },
 
 	individual_units: { UnitRunResult },
 }

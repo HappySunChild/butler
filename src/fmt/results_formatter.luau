@@ -95,7 +95,10 @@ local function results_formatter(options: FmtOptions)
 		local pretty_results: { FormattedResult } = {}
 
 		for _, unit_result in units_results.individual_units do
-			for test, test_result in unit_result.individual do
+			local individual = unit_result.individual
+
+			for _, test in unit_result.ordered_tests do
+				local test_result = individual[test]
 				local status_emoji = if test_result.status == "pass" then PASS_ICON else FAIL_ICON
 				local annotations = {
 					"",

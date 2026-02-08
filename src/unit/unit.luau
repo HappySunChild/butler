@@ -33,6 +33,7 @@ local function unit(label: string, tests: { types.Test }): () -> types.UnitRunRe
 		return {
 			label = label,
 			duration = os.clock() - start_time,
+			ordered_tests = tests,
 
 			individual = individual,
 			tally = tally,
