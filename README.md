@@ -34,3 +34,35 @@ local formatted = butler.format_results(results)
 
 print(formatted)
 ```
+
+*Example output:*
+```
+═════════════════════════════ Status of 4 test(s) ══════════════════════════════
+
+✅  maths ▸ addition - 9.01µs
+✅  maths ▸ subtraction - 2.5µs
+✅  maths ▸ division - 6.71µs
+✅  maths ▸ multiplication - 1.51µs
+
+══════════════════════════════ 4 passed, 0 failed ══════════════════════════════
+```
+*Example error output:*
+```
+════════════════════════════ Errors from 1 test(s) ═════════════════════════════
+
+❌  maths ▸ division
+Expectation not met, because:
+does not equal 0
+   │
+23 │ expect(1):to_equal(0)
+   │
+
+═════════════════════════════ Status of 4 test(s) ══════════════════════════════
+
+✅  maths ▸ subtraction - 2.61µs
+✅  maths ▸ addition - 9.2µs
+❌  maths ▸ division - 0.14ms
+✅  maths ▸ multiplication - 1.31µs
+
+══════════════════════════════ 3 passed, 1 failed ══════════════════════════════
+```
