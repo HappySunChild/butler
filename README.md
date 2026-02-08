@@ -67,4 +67,6 @@ does not equal 0
 ══════════════════════════════ 3 passed, 1 failed ══════════════════════════════
 ```
 
+---
+
 `butler` is based off of dphfox's [tiniest](https://github.com/dphfox/tiniest).
