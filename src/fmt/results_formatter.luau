@@ -1,6 +1,6 @@
 local types = require("../types")
 
-local format_duration = require("./format_duration")
+local fmt_duration = require("./fmt_duration")
 
 type FormattedResult = {
 	test: types.Test,
@@ -69,7 +69,7 @@ local function results_formatter(options: FmtOptions)
 
 	local DIVIDER = if DISABLE_UNICODE then "=" else "═"
 	local MARGIN_LINE = if DISABLE_UNICODE then "|" else "│"
-	local ARROW = if DISABLE_UNICODE then ">" else "▸"
+	local ARROW = if DISABLE_UNICODE then " > " else " ▸ "
 	local BULLET = if DISABLE_UNICODE then "-" else "•"
 
 	local PASS_ICON = if DISABLE_EMOJI
@@ -104,7 +104,7 @@ local function results_formatter(options: FmtOptions)
 				local status_emojis = if test_result.status == "pass" then PASS_ICON else FAIL_ICON
 				local annotations = {
 					"",
-					format_duration(test_result.duration),
+					fmt_duration(test_result.duration),
 				}
 
 				local pretty = {
@@ -112,7 +112,7 @@ local function results_formatter(options: FmtOptions)
 					test_results = test_result,
 					icon = status_emojis,
 
-					full_label = `{unit_results.label} {ARROW} {test.label}`,
+					full_label = `{unit_results.label}{ARROW}{test.label}`,
 					annotations = dim(table.concat(annotations, " - ")),
 				}
 
@@ -191,7 +191,7 @@ local function results_formatter(options: FmtOptions)
 			table.insert(line_items, `{dim(key .. ":")} {value}`)
 		end
 
-		add_line_item("Total Duration", tint_string(format_duration(units_results.total_duration)))
+		add_line_item("Total Duration", tint_string(fmt_duration(units_results.total_duration)))
 
 		local total_tally = units_results.total_tally
 

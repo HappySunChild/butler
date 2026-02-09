@@ -9,8 +9,8 @@ local butler = table.freeze({
 
 	-- FORMATTING
 	results_formatter = require("@self/fmt/results_formatter"),
-	fmt_duration = require("@self/fmt/format_duration"),
-	fmt_repr = require("@self/fmt/repr"),
+	fmt_duration = require("@self/fmt/fmt_duration"),
+	fmt_repr = require("@self/fmt/fmt_repr"),
 })
 
 return butler

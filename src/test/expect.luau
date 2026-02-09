@@ -1,4 +1,4 @@
-local repr = require("../fmt/repr")
+local fmt_repr = require("../fmt/fmt_repr")
 
 type Indexable = { [any]: any }
 type Callable<A... = ...any, R... = ...any> = (A...) -> R...
@@ -44,7 +44,7 @@ local function fail(value: any, reason: string, ...: any)
 		message = `Expectation not met, because:\n{reason}`,
 		trace = debug.traceback(nil, 3),
 		line = debug.info(3, "l"),
-		code = `expect({repr(value)}):{label}({table.concat({ ... }, ", ")})`,
+		code = `expect({fmt_repr(value)}):{label}({table.concat({ ... }, ", ")})`,
 	}, 0)
 end
 
@@ -74,14 +74,14 @@ local CLASS = table.freeze({
 
 	to_equal = function(self: Self, x: any): Self
 		if self.val ~= x then
-			fail(self.val, `does not equal {repr(x)}`, repr(x))
+			fail(self.val, `does not equal {fmt_repr(x)}`, fmt_repr(x))
 		end
 
 		return self
 	end,
 	to_never_equal = function(self: Self, x: any): Self
 		if self.val == x then
-			fail(self.val, `equals {repr(x)}`, repr(x))
+			fail(self.val, `equals {fmt_repr(x)}`, fmt_repr(x))
 		end
 
 		return self
@@ -91,7 +91,7 @@ local CLASS = table.freeze({
 		local a = self.val
 
 		if typeof(a) ~= x_type then
-			fail(a, `isn't of type '{x_type}'`, repr(x_type))
+			fail(a, `isn't of type '{x_type}'`, fmt_repr(x_type))
 		end
 
 		return self
@@ -100,7 +100,7 @@ local CLASS = table.freeze({
 		local a = self.val
 
 		if typeof(a) == x_type then
-			fail(a, `is of type '{x_type}'`, repr(x_type))
+			fail(a, `is of type '{x_type}'`, fmt_repr(x_type))
 		end
 
 		return self
@@ -114,7 +114,7 @@ local CLASS = table.freeze({
 		check(type(tolerance) == "number", "to_be_near() tolerance must be a number.")
 
 		if math.abs(a - x) > tolerance then
-			fail(a, `|{repr(self.val)} - {x}| > {tolerance}`, x, tolerance)
+			fail(a, `|{fmt_repr(self.val)} - {x}| > {tolerance}`, x, tolerance)
 		end
 
 		return self
@@ -127,7 +127,7 @@ local CLASS = table.freeze({
 		check(type(tolerance) == "number", "to_be_near() tolerance must be a number.")
 
 		if math.abs(a - x) <= tolerance then
-			fail(a, `|{repr(self.val)} - {x}| <= {tolerance}`, repr(x), repr(tolerance))
+			fail(a, `|{fmt_repr(self.val)} - {x}| <= {tolerance}`, fmt_repr(x), fmt_repr(tolerance))
 		end
 
 		return self
@@ -139,7 +139,7 @@ local CLASS = table.freeze({
 		check(can_index(a), "expect() value must be indexable")
 
 		if a[key] == nil then
-			fail(a, `value at key [{repr(key)}] == nil`, repr(key))
+			fail(a, `value at key [{fmt_repr(key)}] == nil`, fmt_repr(key))
 		end
 
 		return self
@@ -150,7 +150,7 @@ local CLASS = table.freeze({
 		check(can_index(a), "expect() value must be indexable")
 
 		if a[key] ~= nil then
-			fail(a, `value at key [{repr(key)}] ~= nil`, repr(key))
+			fail(a, `value at key [{fmt_repr(key)}] ~= nil`, fmt_repr(key))
 		end
 
 		return self
@@ -162,7 +162,7 @@ local CLASS = table.freeze({
 		check(can_index(a), "expect() value must be indexable")
 
 		if table.find(a, value) == nil then
-			fail(a, `does not have a {repr(value)}`, repr(value))
+			fail(a, `does not have a {fmt_repr(value)}`, fmt_repr(value))
 		end
 
 		return self
@@ -173,7 +173,7 @@ local CLASS = table.freeze({
 		check(can_index(a), "expect() value must be indexable")
 
 		if table.find(a, value) ~= nil then
-			fail(a, `does have a {repr(value)}`, repr(value))
+			fail(a, `does have a {fmt_repr(value)}`, fmt_repr(value))
 		end
 
 		return self
@@ -211,11 +211,11 @@ local CLASS = table.freeze({
 		local ok, err: string = pcall(f, ...)
 
 		if ok then
-			fail(f, "did not fail", repr(message), ...)
+			fail(f, "did not fail", fmt_repr(message), ...)
 		end
 
 		if not err:lower():match(message:lower()) then
-			fail(f, `failed with {repr(err)}`, repr(message), ...)
+			fail(f, `failed with {fmt_repr(err)}`, fmt_repr(message), ...)
 		end
 
 		return self
@@ -225,7 +225,7 @@ local CLASS = table.freeze({
 		local ok, err: string = pcall(f, ...)
 
 		if not ok and err:lower():match(message:lower()) then
-			fail(f, `failed with {repr(err)}`, repr(message), ...)
+			fail(f, `failed with {fmt_repr(err)}`, fmt_repr(message), ...)
 		end
 
 		return self
