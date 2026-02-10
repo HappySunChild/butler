@@ -29,6 +29,10 @@ export type UnitsRunResult = {
 	[string]: any,
 }
 
+export type Options = {
+	hooks: { butler_hooks.Hook }?,
+}
+
 type TestBody = (remark: (string) -> ()) -> ()
 type TestRunner = (butler_hooks.ButlerHooks) -> TestRunResult
 type UnitRunner = (butler_hooks.ButlerHooks) -> UnitRunResult
@@ -141,13 +145,13 @@ local function units_runner(units_hooks: butler_hooks.ButlerHooks)
 	return run_units
 end
 
-local function butler(hooks: { butler_hooks.Hook }?)
+local function butler(options: Options)
 	local new_butler = {
 		unit = unit,
 		test = test,
 		expect = expect,
 
-		run_units = units_runner(butler_hooks(hooks)),
+		run_units = units_runner(butler_hooks(options.hooks)),
 	}
 
 	return new_butler
