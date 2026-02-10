@@ -3,14 +3,19 @@
 
 ## Example Usage
 ```luau
-local butler = require("path/to/butler")
-local unit, test, expect = butler.unit, butler.test, butler.expect
+local butler = require("@butler/butler")
+local butler_chrono = require("@butler/hooks/butler_chrono")
+local butler_pretty = require("@butler/hooks/butler_pretty")
+
+local configured =
+	butler({ hooks = { butler_chrono, butler_pretty({ hooks = { butler_chrono } }) } })
+local unit, test, expect = configured.unit, configured.test, configured.expect
 
 local maths_unit = unit("maths", {
 	test("addition", function()
 		expect(2 + 2):to_equal(4)
 		expect(1 + -1):to_equal(0)
-		expect(-1 + -2):to_never_equal(-6)
+		expect(-1 + -2):to_never_equal(-5)
 	end),
 	test("subtraction", function()
 		expect(10 - 1):to_equal(9)
@@ -22,21 +27,16 @@ local maths_unit = unit("maths", {
 		expect(20 * -13):to_equal(-260)
 		expect(-10 * -1):to_equal(10)
 	end),
-	test("division", function()
+	test("division", function(remark: (string) -> ())
 		expect(10 / 2):to_equal(5)
 		expect(2 / -4):to_be_near(-0.5, 0.1)
 		expect(-2 / -2):to_equal(1)
+		expect(math.isnan(0 / 0)):to_equal(true)
+		expect(nil):to_never_exist()
 	end),
 })
 
-local results = butler.run_units({ maths_unit })
-local fmt = butler.results_formatter({
-	disable_color = false,
-	disable_unicode = false,
-	disable_emoji = false,
-})
-
-print(fmt(results))
+configured.run_units({ maths_unit })
 
 ```
 

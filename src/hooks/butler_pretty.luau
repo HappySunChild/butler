@@ -1,27 +1,29 @@
-local types = require("../types")
+local butler = require("../butler")
+local butler_hooks = require("../butler_hooks")
 
-local fmt_duration = require("./fmt_duration")
+export type HookMethod = | "add_annotations" | "add_line_items" | butler_hooks.HookMethod
 
 type FormattedResult = {
-	test: types.Test,
-	test_results: types.TestRunResult,
+	test_results: butler.TestRunResult,
 	icon: string,
 
 	full_label: string,
 	annotations: string,
 }
 
-type FmtOptions = {
+export type Options = {
+	hooks: { butler_hooks.Hook }?,
 	disable_unicode: boolean?,
 	disable_emoji: boolean?,
 	disable_color: boolean?,
-
 	line_width: number?,
 }
 
-local ANSI_RESET = "\x1b[0m"
+local function butler_pretty(options: Options)
+	local hooks = butler_hooks(options.hooks)
 
-local function results_formatter(options: FmtOptions)
+	local ANSI_RESET = "\x1b[0m"
+
 	local DISABLE_UNICODE = options.disable_unicode
 	local DISABLE_EMOJI = options.disable_emoji
 	local DISABLE_COLOR = options.disable_color
@@ -90,7 +92,7 @@ local function results_formatter(options: FmtOptions)
 
 	local FULL_DIVIDER = dim(string.rep(DIVIDER, LINE_WIDTH))
 
-	local function run_fmt(units_results: types.UnitsRunResult): string
+	local function run_fmt(units_results: butler.UnitsRunResult): string
 		local lines = {}
 
 		local pretty_results: { FormattedResult } = {}
@@ -99,21 +101,24 @@ local function results_formatter(options: FmtOptions)
 		for _, unit_results in units_results.individual_units do
 			local individual = unit_results.individual
 
-			for _, test in unit_results.ordered_tests do
-				local test_result = individual[test]
+			for _, test_result in individual do
+				-- local test_result = individual[test]
 				local status_emojis = if test_result.status == "pass" then PASS_ICON else FAIL_ICON
-				local annotations = {
-					"",
-					fmt_duration(test_result.duration),
-				}
+				local annotations = ""
+
+				local function add_annotation(annotation: string)
+					annotations ..= ` - {annotation}`
+				end
+
+				hooks.notify("add_annotations", test_result, options, add_annotation)
 
 				local pretty = {
-					test = test,
+					-- test = test,
 					test_results = test_result,
 					icon = status_emojis,
 
-					full_label = `{unit_results.label}{ARROW}{test.label}`,
-					annotations = dim(table.concat(annotations, " - ")),
+					full_label = `{unit_results.label}{ARROW}{test_result.label}`,
+					annotations = dim(annotations),
 				}
 
 				if #test_result.remarks > 0 then
@@ -184,32 +189,42 @@ local function results_formatter(options: FmtOptions)
 		end
 		table.insert(lines, "")
 
-		-- CONCLUSION SECTION
-		local line_items = {}
-
-		local function add_line_item(key: string, value: string)
-			table.insert(line_items, `{dim(key .. ":")} {value}`)
-		end
-
-		add_line_item("Total Duration", tint_string(fmt_duration(units_results.total_duration)))
-
+		-- TOTAL TALLY SECTION
 		local total_tally = units_results.total_tally
 
 		table.insert(
 			lines,
 			title(`{pass(total_tally.pass)} passed, {fail(total_tally.fail)} failed`)
 		)
-		table.insert(lines, "")
-		for _, item in line_items do
-			table.insert(lines, item)
+
+		-- BONUS ITEMS SECTION
+		local line_items = {}
+
+		local function add_line_item(key: string, value: string)
+			table.insert(line_items, `{dim(key .. ":")} {value}`)
 		end
-		table.insert(lines, "")
-		table.insert(lines, FULL_DIVIDER)
+
+		hooks.notify("add_line_items", units_results, options, add_line_item)
+
+		if #line_items > 0 then
+			table.insert(lines, "")
+			for _, item in line_items do
+				table.insert(lines, item)
+			end
+			table.insert(lines, "")
+			table.insert(lines, FULL_DIVIDER)
+		end
 
 		return table.concat(lines, "\n")
 	end
 
-	return run_fmt
+	local pretty_hook: butler_hooks.Hook = {
+		after_units = function(_, results: butler.UnitsRunResult)
+			print(run_fmt(results))
+		end,
+	}
+
+	return pretty_hook
 end
 
-return results_formatter
+return butler_pretty

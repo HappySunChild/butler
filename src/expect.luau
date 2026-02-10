@@ -1,4 +1,4 @@
-local fmt_repr = require("../fmt/fmt_repr")
+local fmt_repr = require("./fmt_repr")
 
 type Indexable = { [any]: any }
 type Callable<A... = ...any, R... = ...any> = (A...) -> R...
