@@ -33,6 +33,14 @@ export type Options = {
 	hooks: { butler_hooks.Hook }?,
 }
 
+export type Configured = {
+	unit: (label: string, tests: { TestRunner }) -> UnitRunner,
+	test: (label: string, run: TestBody) -> TestRunner,
+	expect: (any) -> expect.ExpectTests,
+
+	run_units: (units: { UnitRunner }) -> UnitsRunResult,
+}
+
 type TestBody = (remark: (string) -> ()) -> ()
 type TestRunner = (butler_hooks.ButlerHooks) -> TestRunResult
 type UnitRunner = (butler_hooks.ButlerHooks) -> UnitRunResult
@@ -145,7 +153,7 @@ local function units_runner(units_hooks: butler_hooks.ButlerHooks)
 	return run_units
 end
 
-local function butler(options: Options)
+local function butler(options: Options): Configured
 	local new_butler = {
 		unit = unit,
 		test = test,
