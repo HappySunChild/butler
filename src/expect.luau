@@ -27,6 +27,12 @@ export type ExpectTests = {
 
 	to_be_near: (self: ExpectTests, x: number, tolerance: number) -> ExpectTests,
 	to_never_be_near: (self: ExpectTests, x: number, tolerance: number) -> ExpectTests,
+	
+	to_be_less_than: (self: ExpectTests, x: number) -> ExpectTests,
+	to_never_be_less_than: (self: ExpectTests, x: number) -> ExpectTests,
+	
+	to_be_greater_than: (self: ExpectTests, x: number) -> ExpectTests,
+	to_never_be_greater_than: (self: ExpectTests, x: number) -> ExpectTests,
 
 	to_have_key: (self: ExpectTests, key: any) -> ExpectTests,
 	to_never_have_key: (self: ExpectTests, key: any) -> ExpectTests,
@@ -132,7 +138,7 @@ local CLASS = table.freeze({
 		check_usage(type(tolerance) == "number", "to_be_near() tolerance must be a number.")
 
 		if math.abs(a - x) > tolerance then
-			fail(a, `|{fmt_repr(self.v)} - {x}| > {tolerance}`, x, tolerance)
+			fail(a, `|{fmt_repr(a)} - {x}| > {tolerance}`, x, tolerance)
 		end
 
 		return self
@@ -148,6 +154,56 @@ local CLASS = table.freeze({
 			fail(a, `|{fmt_repr(self.v)} - {x}| <= {tolerance}`, fmt_repr(x), fmt_repr(tolerance))
 		end
 
+		return self
+	end,
+	
+	to_be_less_than = function(self: Self<number>, x: number): Self<number>
+		local a = self.v
+		
+		check_usage(type(a) == "number", "expect() value must be a number.")
+		check_usage(type(x) == "number", "to_be_less_than() x must be a number.")
+		
+		if a >= x then
+			fail(a, `{fmt_repr(a)} >= {x}`, x)
+		end
+		
+		return self
+	end,
+	to_never_be_less_than = function(self: Self<number>, x: number): Self<number>
+		local a = self.v
+		
+		check_usage(type(a) == "number", "expect() value must be a number.")
+		check_usage(type(x) == "number", "to_never_be_less_than() value must be a number.")
+		
+		if a < x then
+			fail(a, `{fmt_repr(a)} < {x}`, x)
+		end
+		
+		return self
+	end,
+	
+	to_be_greater_than = function(self: Self<number>, x: number): Self<number>
+		local a = self.v
+		
+		check_usage(type(a) == "number", "expect() value must be a number.")
+		check_usage(type(x) == "number", "to_be_greater_than() x must be a number.")
+		
+		if a <= x then
+			fail(a, `{fmt_repr(a)} <= {x}`, x)
+		end
+		
+		return self
+	end,
+	to_never_be_greater_than = function(self: Self<number>, x: number): Self<number>
+		local a = self.v
+		
+		check_usage(type(a) == "number", "expect() value must be a number.")
+		check_usage(type(x) == "number", "to_never_be_greater_than() value must be a number.")
+		
+		if a > x then
+			fail(a, `{fmt_repr(a)} > {x}`, x)
+		end
+		
 		return self
 	end,
 
@@ -305,10 +361,10 @@ local CLASS = table.freeze({
 		return self
 	end,
 })
-local METATABLE = table.freeze({ __index = CLASS })
+local CLASS_METATABLE = table.freeze({ __index = CLASS })
 
 local function expect(value: any): ExpectTests
-	return setmetatable({ v = value }, METATABLE) :: any
+	return setmetatable({ v = value }, CLASS_METATABLE) :: any
 end
 
 return expect
