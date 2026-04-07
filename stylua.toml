@@ -1,3 +1,4 @@
+syntax = "Luau"
 quote_style = "AutoPreferDouble"
 call_parentheses = "Always"
 column_width = 100
