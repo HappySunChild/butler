@@ -52,6 +52,9 @@ export type ExpectTests = {
 	to_only_have_values: (self: ExpectTests, values: { any }) -> (),
 	to_never_only_have_values: (self: ExpectTests, values: { any }) -> (),
 
+	to_have_pairs: (self: ExpectTests, pairs: { [any]: any }) -> ExpectTests,
+	to_never_have_pairs: (self: ExpectTests, pairs: { [any]: any }) -> ExpectTests,
+
 	to_throw: (self: ExpectTests, ...unknown) -> ExpectTests,
 	to_never_throw: (self: ExpectTests, ...unknown) -> ExpectTests,
 
@@ -69,6 +72,7 @@ type Self<T = unknown> = {
 } & ExpectTests
 
 local ERR_INDEXABLE_TYPE = "expect() value must be indexable"
+local ERR_CALLABLE_TYPE = "expect() value must be a function"
 
 local function can_index(x: unknown): boolean
 	return type(x) == "table" or type(x) == "userdata"
@@ -244,58 +248,61 @@ local CLASS = table.freeze({
 		return self
 	end,
 
-	to_have_keys = function(self: Self<Indexable>, keys: { any }): Self<Indexable>
+	to_have_keys = function(self: Self<Indexable>, target_keys: { any }): Self<Indexable>
 		local a = self.v
 
 		check_usage(can_index(a), ERR_INDEXABLE_TYPE)
 
-		for _, key in keys do
+		for _, key in target_keys do
 			if a[key] == nil then
-				fail(a, `value at key [{fmt_repr(key)}] == nil`, fmt_repr(keys))
+				fail(a, `value at key [{fmt_repr(key)}] == nil`, fmt_repr(target_keys))
 			end
 		end
 
 		return self
 	end,
-	to_never_have_keys = function(self: Self<Indexable>, keys: { any }): Self<Indexable>
+	to_never_have_keys = function(self: Self<Indexable>, target_keys: { any }): Self<Indexable>
 		local a = self.v
 
 		check_usage(can_index(a), ERR_INDEXABLE_TYPE)
 
-		for _, key in keys do
+		for _, key in target_keys do
 			if a[key] ~= nil then
-				fail(a, `value at key [{fmt_repr(key)}] ~= nil`, fmt_repr(keys))
+				fail(a, `value at key [{fmt_repr(key)}] ~= nil`, fmt_repr(target_keys))
 			end
 		end
 
 		return self
 	end,
 
-	to_only_have_keys = function(self: Self<Indexable>, keys: { any }): Self<Indexable>
+	to_only_have_keys = function(self: Self<Indexable>, target_keys: { any }): Self<Indexable>
 		local a = self.v
 
 		check_usage(can_index(a), ERR_INDEXABLE_TYPE)
 
 		for key in a do
-			if table.find(keys, key) == nil then
-				fail(a, `contained disallowed key [{fmt_repr(key)}]`, fmt_repr(keys))
+			if table.find(target_keys, key) == nil then
+				fail(a, `contained disallowed key [{fmt_repr(key)}]`, fmt_repr(target_keys))
 			end
 		end
 
 		return self
 	end,
-	to_never_only_have_keys = function(self: Self<Indexable>, keys: { any }): Self<Indexable>
+	to_never_only_have_keys = function(
+		self: Self<Indexable>,
+		target_keys: { any }
+	): Self<Indexable>
 		local a = self.v
 
 		check_usage(can_index(a), ERR_INDEXABLE_TYPE)
 
 		for key in a do
-			if table.find(keys, key) == nil then
+			if table.find(target_keys, key) == nil then
 				return self
 			end
 		end
 
-		fail(a, `contained only disallowed keys: {fmt_repr(keys)}`, fmt_repr(keys))
+		fail(a, `contained only disallowed keys: {fmt_repr(target_keys)}`, fmt_repr(target_keys))
 
 		return self -- pointless but the error is annoying
 	end,
@@ -323,66 +330,100 @@ local CLASS = table.freeze({
 		return self
 	end,
 
-	to_have_values = function(self: Self<Indexable>, values: { any }): Self<Indexable>
+	to_have_values = function(self: Self<Indexable>, target_values: { any }): Self<Indexable>
 		local a = self.v
 
 		check_usage(can_index(a), ERR_INDEXABLE_TYPE)
 
-		for _, value in values do
+		for _, value in target_values do
 			if table.find(a, value) == nil then
-				fail(a, `does not have a {fmt_repr(value)}`, fmt_repr(values))
+				fail(a, `does not have a {fmt_repr(value)}`, fmt_repr(target_values))
 			end
 		end
 
 		return self
 	end,
-	to_never_have_values = function(self: Self<Indexable>, values: { any }): Self<Indexable>
+	to_never_have_values = function(self: Self<Indexable>, target_values: { any }): Self<Indexable>
 		local a = self.v
 
 		check_usage(can_index(a), ERR_INDEXABLE_TYPE)
 
-		for _, value in values do
+		for _, value in target_values do
 			if table.find(a, value) ~= nil then
-				fail(a, `does have a {fmt_repr(value)}`, fmt_repr(values))
+				fail(a, `does have a {fmt_repr(value)}`, fmt_repr(target_values))
 			end
 		end
 
 		return self
 	end,
 
-	to_only_have_values = function(self: Self<Indexable>, values: { any }): Self<Indexable>
+	to_only_have_values = function(self: Self<Indexable>, target_values: { any }): Self<Indexable>
 		local a = self.v
 
 		check_usage(can_index(a), ERR_INDEXABLE_TYPE)
 
 		for _, value in a do
-			if table.find(values, value) == nil then
-				fail(a, `contained disallowed value {fmt_repr(value)}`, fmt_repr(values))
+			if table.find(target_values, value) == nil then
+				fail(a, `contained disallowed value {fmt_repr(value)}`, fmt_repr(target_values))
 			end
 		end
 
 		return self
 	end,
-	to_never_only_have_values = function(self: Self<Indexable>, values: { any }): Self<Indexable>
+	to_never_only_have_values = function(
+		self: Self<Indexable>,
+		target_values: { any }
+	): Self<Indexable>
 		local a = self.v
 
 		check_usage(can_index(a), ERR_INDEXABLE_TYPE)
 
 		for _, value in a do
-			if table.find(values, value) == nil then
+			if table.find(target_values, value) == nil then
 				return self
 			end
 		end
 
-		fail(a, `contained only disallowed values: {fmt_repr(values)}`, fmt_repr(values))
+		fail(
+			a,
+			`contained only disallowed values: {fmt_repr(target_values)}`,
+			fmt_repr(target_values)
+		)
 
+		return self
+	end,
+
+	to_have_pairs = function(self: Self<Indexable>, target_pairs: { [any]: any }): Self<Indexable>
+		local a = self.v
+
+		check_usage(can_index(a), ERR_INDEXABLE_TYPE)
+
+		for key, value in target_pairs do
+			if a[key] ~= value then
+				fail(a, `value at key [{fmt_repr(key)}] ~= {value}`, fmt_repr(target_pairs))
+			end
+		end
+
+		return self
+	end,
+	to_never_have_pairs = function(self: Self<Indexable>, target_pairs: {[any]: any}): Self<Indexable>
+		local a = self.v
+		
+		check_usage(can_index(a), ERR_INDEXABLE_TYPE)
+		
+		for key, value in target_pairs do
+			if a[key] == value then
+				fail(a, `value at key [{fmt_repr(key)}] == {fmt_repr(value)}`, fmt_repr(target_pairs))
+			end
+		end
+		
 		return self
 	end,
 
 	to_throw = function<A...>(self: Self<Callable<A...>>, ...: A...): Self<Callable<A...>>
 		local a = self.v
 
-		check_usage(type(a) == "function", "expect() value must be a function")
+		check_usage(type(a) == "function", ERR_CALLABLE_TYPE)
 
 		local ok = pcall(a, ...)
 
@@ -395,7 +436,7 @@ local CLASS = table.freeze({
 	to_never_throw = function<A...>(self: Self<Callable<A...>>, ...: A...): Self<Callable<A...>>
 		local f = self.v
 
-		check_usage(type(f) == "function", "expect() value must be a function")
+		check_usage(type(f) == "function", ERR_CALLABLE_TYPE)
 
 		local ok = pcall(f, ...)
 
