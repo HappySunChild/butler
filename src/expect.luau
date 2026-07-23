@@ -90,20 +90,28 @@ const function check_callable(x: unknown): boolean
 	end
 
 	return check_indexable(x)
-		and if getmetatable(x :: any) ~= nil
-			then check_callable(getmetatable(x :: any).__call)
-			else false
+		and if getmetatable(x :: any) ~= nil then check_callable(getmetatable(x :: any).__call) else false
+end
+
+const function is_equal(a: any, b: any): boolean
+	return a == b or (a ~= a and b ~= b)
 end
 
 const function fail(value: any, reason: string, ...: any): never
 	const label = debug.info(2, "n")
+
+	const args = { ... }
+
+	for index, arg in args do
+		args[index] = fmt_repr(arg)
+	end
 
 	error({
 		type = "failed_expectation",
 		message = `Expectation not met, because:\n{reason}`,
 		trace = debug.traceback(nil, 3),
 		line = debug.info(3, "l"),
-		code = `expect({fmt_repr(value)}):{label}({table.concat({ ... }, ", ")})`,
+		code = `expect({fmt_repr(value)}):{label}({table.concat(args, ", ")})`,
 	}, 0)
 end
 
@@ -133,14 +141,14 @@ const CLASS_METATABLE = table.freeze({
 		end,
 
 		to_equal = function(self: Self, x: any): Self
-			if self.v ~= x then
+			if not is_equal(self.v, x) then
 				fail(self.v, `does not equal {fmt_repr(x)}`, fmt_repr(x))
 			end
 
 			return self
 		end,
 		to_never_equal = function(self: Self, x: any): Self
-			if self.v == x then
+			if is_equal(self.v, x) then
 				fail(self.v, `equals {fmt_repr(x)}`, fmt_repr(x))
 			end
 
@@ -188,12 +196,7 @@ const CLASS_METATABLE = table.freeze({
 			assert_usage(type(tolerance) == "number", "to_be_near() tolerance must be a number.")
 
 			if math.abs(a - x) <= tolerance then
-				fail(
-					a,
-					`|{fmt_repr(self.v)} - {x}| <= {tolerance}`,
-					fmt_repr(x),
-					fmt_repr(tolerance)
-				)
+				fail(a, `|{fmt_repr(self.v)} - {x}| <= {tolerance}`, fmt_repr(x), fmt_repr(tolerance))
 			end
 
 			return self
@@ -310,11 +313,7 @@ const CLASS_METATABLE = table.freeze({
 
 			for key, value_type in keys do
 				if type(a[key]) ~= value_type then
-					fail(
-						a,
-						`type of value at key [{fmt_repr(key)}] ~= "{value_type}"`,
-						fmt_repr(keys)
-					)
+					fail(a, `type of value at key [{fmt_repr(key)}] ~= "{value_type}"`, fmt_repr(keys))
 				end
 			end
 
@@ -330,11 +329,7 @@ const CLASS_METATABLE = table.freeze({
 
 			for key, value_type in keys do
 				if type(a[key]) == value_type then
-					fail(
-						a,
-						`type of value at key [{fmt_repr(key)}] == "{value_type}"`,
-						fmt_repr(keys)
-					)
+					fail(a, `type of value at key [{fmt_repr(key)}] == "{value_type}"`, fmt_repr(keys))
 				end
 			end
 
@@ -354,10 +349,7 @@ const CLASS_METATABLE = table.freeze({
 
 			return self
 		end,
-		to_never_only_have_keys = function(
-			self: Self<Indexable>,
-			target_keys: { any }
-		): Self<Indexable>
+		to_never_only_have_keys = function(self: Self<Indexable>, target_keys: { any }): Self<Indexable>
 			const a = self.v
 
 			assert_usage(check_indexable(a), ERR_INDEXABLE_TYPE)
@@ -368,11 +360,7 @@ const CLASS_METATABLE = table.freeze({
 				end
 			end
 
-			fail(
-				a,
-				`contained only disallowed keys: {fmt_repr(target_keys)}`,
-				fmt_repr(target_keys)
-			)
+			fail(a, `contained only disallowed keys: {fmt_repr(target_keys)}`, fmt_repr(target_keys))
 
 			return self -- pointless but the error is annoying
 		end,
@@ -413,10 +401,7 @@ const CLASS_METATABLE = table.freeze({
 
 			return self
 		end,
-		to_never_have_values = function(
-			self: Self<Indexable>,
-			target_values: { any }
-		): Self<Indexable>
+		to_never_have_values = function(self: Self<Indexable>, target_values: { any }): Self<Indexable>
 			const a = self.v
 
 			assert_usage(check_indexable(a), ERR_INDEXABLE_TYPE)
@@ -430,10 +415,7 @@ const CLASS_METATABLE = table.freeze({
 			return self
 		end,
 
-		to_only_have_values = function(
-			self: Self<Indexable>,
-			target_values: { any }
-		): Self<Indexable>
+		to_only_have_values = function(self: Self<Indexable>, target_values: { any }): Self<Indexable>
 			const a = self.v
 
 			assert_usage(check_indexable(a), ERR_INDEXABLE_TYPE)
@@ -446,10 +428,7 @@ const CLASS_METATABLE = table.freeze({
 
 			return self
 		end,
-		to_never_only_have_values = function(
-			self: Self<Indexable>,
-			target_values: { any }
-		): Self<Indexable>
+		to_never_only_have_values = function(self: Self<Indexable>, target_values: { any }): Self<Indexable>
 			const a = self.v
 
 			assert_usage(check_indexable(a), ERR_INDEXABLE_TYPE)
@@ -460,19 +439,12 @@ const CLASS_METATABLE = table.freeze({
 				end
 			end
 
-			fail(
-				a,
-				`contained only disallowed values: {fmt_repr(target_values)}`,
-				fmt_repr(target_values)
-			)
+			fail(a, `contained only disallowed values: {fmt_repr(target_values)}`, fmt_repr(target_values))
 
 			return self
 		end,
 
-		to_have_pairs = function(
-			self: Self<Indexable>,
-			target_pairs: { [any]: any }
-		): Self<Indexable>
+		to_have_pairs = function(self: Self<Indexable>, target_pairs: { [any]: any }): Self<Indexable>
 			const a = self.v
 
 			assert_usage(check_indexable(a), ERR_INDEXABLE_TYPE)
@@ -485,21 +457,14 @@ const CLASS_METATABLE = table.freeze({
 
 			return self
 		end,
-		to_never_have_pairs = function(
-			self: Self<Indexable>,
-			target_pairs: { [any]: any }
-		): Self<Indexable>
+		to_never_have_pairs = function(self: Self<Indexable>, target_pairs: { [any]: any }): Self<Indexable>
 			const a = self.v
 
 			assert_usage(check_indexable(a), ERR_INDEXABLE_TYPE)
 
 			for key, value in target_pairs do
 				if a[key] == value then
-					fail(
-						a,
-						`value at key [{fmt_repr(key)}] == {fmt_repr(value)}`,
-						fmt_repr(target_pairs)
-					)
+					fail(a, `value at key [{fmt_repr(key)}] == {fmt_repr(value)}`, fmt_repr(target_pairs))
 				end
 			end
 
@@ -594,7 +559,7 @@ const CLASS_METATABLE = table.freeze({
 
 		to_evaluate_to = function<A...>(
 			self: Self<Callable<A...>>,
-			value: unknown,
+			target_value: unknown,
 			...: A...
 		): Self<Callable<A...>>
 			const fn = self.v
@@ -603,15 +568,15 @@ const CLASS_METATABLE = table.freeze({
 
 			const result = fn(...)
 
-			if result ~= value then
-				fail(fn, `did not evaluate to {fmt_repr(value)}`, fmt_repr(value), ...)
+			if not is_equal(result, target_value) then
+				fail(fn, `did not evaluate to {fmt_repr(target_value)}`, fmt_repr(target_value), ...)
 			end
 
 			return self
 		end,
 		to_never_evaluate_to = function<A...>(
 			self: Self<Callable<A...>>,
-			value: unknown,
+			target_value: unknown,
 			...: A...
 		): Self<Callable<A...>>
 			const fn = self.v
@@ -620,8 +585,8 @@ const CLASS_METATABLE = table.freeze({
 
 			const result = fn(...)
 
-			if result == value then
-				fail(fn, `evaluated to {fmt_repr(value)}`, fmt_repr(value), ...)
+			if is_equal(result, target_value) then
+				fail(fn, `evaluated to {fmt_repr(target_value)}`, fmt_repr(target_value), ...)
 			end
 
 			return self
