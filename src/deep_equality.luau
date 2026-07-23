@@ -26,6 +26,8 @@ const function deep_equality(a: any, b: any): boolean
 		return true
 	elseif a_type == "number" then
 		return math.isnan(a) and math.isnan(b)
+	elseif a_type == "buffer" then
+		return buffer.tostring(a) == buffer.tostring(b)
 	end
 
 	return false
